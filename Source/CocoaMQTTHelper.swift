@@ -5,16 +5,20 @@
 import Foundation
 #if IS_SWIFT_PACKAGE
 import CocoaMQTT
-import CocoaMQTTWebSocket
 #endif
 
 public class CocoaMQTTHelper: NSObject {
 
     private var client: CocoaMQTT5?
 
-    @objc public init(_ host: String, port: UInt16, deviceId: String) {
+    @objc public init(_ host: String, port: UInt16, deviceId: String, uri: String) {
         super.init()
-        client = CocoaMQTT5(clientID: deviceId, host: host, port: port, socket: CocoaMQTTWebSocket())
+        let websocket = CocoaMQTTWebSocket(uri: uri)
+        client = CocoaMQTT5(clientID: deviceId, host: host, port: port, socket: websocket)
+    }
+
+    @objc public convenience init(_ host: String, port: UInt16, deviceId: String) {
+        self.init(host, port: port, deviceId: deviceId, uri: "/mqtt")
     }
 
     @objc public func enableSSL(_ enabled: Bool) -> CocoaMQTTHelper {
@@ -42,7 +46,7 @@ public class CocoaMQTTHelper: NSObject {
         client?.didConnectAck = { _, reason, _ in
             onConnected(reason)
         }
-        client?.connect()
+        let _ = client?.connect()
     }
 
     @objc public func disconnect(_ onDisconnected: @escaping (CocoaMQTTDISCONNECTReasonCode) -> Void) {
